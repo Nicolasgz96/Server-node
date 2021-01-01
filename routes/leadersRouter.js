@@ -11,7 +11,7 @@ leadersRouter.use(bodyParser.json());
 
 leadersRouter.route('/')
 .get((req,res,next) => {
-    Leaders.find({})
+    Leaders.find({}).populate('comments.author')
     .then((leaders) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -19,7 +19,7 @@ leadersRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.create(req.body)
     .then((leader) => {
         console.log('Leader Created ', leader);
@@ -29,11 +29,11 @@ leadersRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /leaders');
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.remove({})
     .then((resp) => {
         res.statusCode = 200;
@@ -45,7 +45,7 @@ leadersRouter.route('/')
 
 leadersRouter.route('/:leaderId')
 .get((req,res,next) => {
-    Leaders.findById(req.params.leaderId)
+    Leaders.findById(req.params.leaderId).populate('comments.author')
     .then((leader) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -53,11 +53,11 @@ leadersRouter.route('/:leaderId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('POST operation not supported on /leaders/'+ req.params.leaderId);
 })
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.findByIdAndUpdate(req.params.leaderId, {
         $set: req.body
     }, { new: true })
@@ -68,7 +68,7 @@ leadersRouter.route('/:leaderId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.findByIdAndRemove(req.params.leaderId)
     .then((resp) => {
         res.statusCode = 200;
@@ -80,7 +80,7 @@ leadersRouter.route('/:leaderId')
 
 leadersRouter.route('/:leaderId/comments')
 .get((req,res,next) => {
-    Leaders.findById(req.params.leaderId)
+    Leaders.findById(req.params.leaderId).populate('comments.author')
     .then((leader) => {
         if (leader != null) {
             res.statusCode = 200;
@@ -120,7 +120,7 @@ leadersRouter.route('/:leaderId/comments')
     res.end('PUT operation not supported on /leaders/'
         + req.params.leaderId + '/comments');
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.findById(req.params.leaderId)
     .then((leader) => {
         if (leader != null) {
@@ -145,7 +145,7 @@ leadersRouter.route('/:leaderId/comments')
 
 leadersRouter.route('/:leaderId/comments/:commentId')
 .get((req,res,next) => {
-    Leaders.findById(req.params.leaderId)
+    Leaders.findById(req.params.leaderId).populate('comments.author')
     .then((leader) => {
         if (leader != null && leader.comments.id(req.params.commentId) != null) {
             res.statusCode = 200;
